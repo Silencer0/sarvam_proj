@@ -152,10 +152,10 @@ export function attachMultiplayer(
       if (data.type === "cast") {
         const proof = proofs.consume(data.castToken, data.command, ws.id);
         if (!proof) {
-          error("Rap approval expired or invalid. Record another bar.");
+          error("Voice approval expired or invalid. Say the spell again.");
           return;
         }
-        const event = castSpell(room.duel, ws.id, data.command, proof.score);
+        const event = castSpell(room.duel, ws.id, proof.command);
         if (!event) {
           error("Spell unavailable or cooling down.");
           return;

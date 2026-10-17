@@ -13,21 +13,15 @@ export function createCastProofs({
     for (const [id, expires] of issued) if (expires <= now()) issued.delete(id);
   };
   return {
-    issue({ command, score }, subject = "solo") {
+    issue({ command }, subject = "solo") {
       cleanup();
-      if (
-        !commands.has(command) ||
-        !Number.isInteger(score) ||
-        score < 0 ||
-        score > 100
-      )
-        throw new Error("Invalid cast assessment");
+      if (!commands.has(command)) throw new Error("Invalid cast command");
       while (issued.size >= maxEntries)
         issued.delete(issued.keys().next().value);
       const nonce = randomBytes(16).toString("hex"),
         expires = now() + ttlMs;
       const body = Buffer.from(
-        JSON.stringify({ command, score, subject, nonce, expires }),
+        JSON.stringify({ command, subject, nonce, expires }),
       ).toString("base64url");
       issued.set(nonce, expires);
       return body + "." + sign(body);
@@ -54,7 +48,7 @@ export function createCastProofs({
         )
           return null;
         issued.delete(data.nonce);
-        return { command: data.command, score: data.score };
+        return { command: data.command };
       } catch {
         return null;
       }

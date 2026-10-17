@@ -21,16 +21,16 @@ test("movement is normalized, bounded and expires without fresh input", () => {
 test("spell ranges, cooldowns, shields, healing and defeat are authoritative", () => {
   const duel = createDuel("a", "b");
   assert.ok(castSpell(duel, "a", "fireball"));
-  assert.equal(duel.players[1].health, 55);
+  assert.equal(duel.players[1].health, 60);
   assert.equal(castSpell(duel, "a", "fireball"), null);
   assert.equal(castSpell(duel, "b", "lightning")?.command, "lightning");
   assert.equal(duel.players[0].health, 100);
   castSpell(duel, "b", "heal");
-  assert.equal(duel.players[1].health, 89);
+  assert.equal(duel.players[1].health, 90);
   castSpell(duel, "b", "shield");
   tickDuel(duel, 1.3);
   castSpell(duel, "a", "fireball");
-  assert.equal(duel.players[1].health, 89);
+  assert.equal(duel.players[1].health, 90);
   tickDuel(duel, 3);
   castSpell(duel, "a", "fireball");
   tickDuel(duel, 1.3);
@@ -49,23 +49,23 @@ test("disconnect forfeits and unknown input never mutates state", () => {
   forfeit(d, "a");
   assert.equal(d.winnerId, "b");
 });
-test("authoritative score scales damage, healing, shield and dash with event power", () => {
+test("authoritative fixed powers ignore client score claims", () => {
   for (const command of ["fireball", "lightning", "heal", "shield", "dash"]) {
-    const low = createDuel("a", "b"),
-      high = createDuel("a", "b");
-    low.players[1].x = high.players[1].x = 1;
-    low.players[0].health = high.players[0].health = 10;
-    const a = castSpell(low, "a", command, 20),
-      b = castSpell(high, "a", command, 90);
-    assert.ok(b.multiplier > a.multiplier);
-    assert.equal(b.score, 90);
-    assert.equal(b.power.scale, b.scale);
-    if (command === "fireball" || command === "lightning")
-      assert.ok(high.players[1].health < low.players[1].health);
-    if (command === "heal")
-      assert.ok(high.players[0].health > low.players[0].health);
-    if (command === "shield")
-      assert.ok(high.players[0].shieldUntil > low.players[0].shieldUntil);
-    if (command === "dash") assert.ok(high.players[0].x > low.players[0].x);
+    const a = createDuel("a", "b"),
+      b = createDuel("a", "b");
+    a.players[1].x = b.players[1].x = 1;
+    a.players[0].health = b.players[0].health = 10;
+    const first = castSpell(a, "a", command, 0),
+      second = castSpell(b, "a", command, 100);
+    assert.deepEqual(first, second);
+    assert.deepEqual(a, b);
+    assert.equal(first.multiplier, 1);
+    assert.equal(first.scale, 1);
+    assert.equal(Object.hasOwn(first, "score"), false);
+    if (command === "fireball") assert.equal(a.players[1].health, 60);
+    if (command === "lightning") assert.equal(a.players[1].health, 25);
+    if (command === "heal") assert.equal(a.players[0].health, 40);
+    if (command === "shield") assert.equal(a.players[0].shieldUntil, 2.5);
+    if (command === "dash") assert.equal(a.players[0].x, -1);
   }
 });

@@ -57,7 +57,7 @@ export function tickDuel(d, dt) {
     }
   }
 }
-export function castSpell(d, id, command, score = 50) {
+export function castSpell(d, id, command) {
   if (
     d.phase !== "playing" ||
     typeof command !== "string" ||
@@ -67,7 +67,7 @@ export function castSpell(d, id, command, score = 50) {
   const p = d.players.find((p) => p.id === id),
     target = d.players.find((p) => p.id !== id);
   if (!p || !target || d.time < p.cooldowns[command]) return null;
-  const power = getSpellPower(command, score);
+  const power = getSpellPower(command);
   p.cooldowns[command] = d.time + SPELLS[command].cooldown;
   if (command === "shield") p.shieldUntil = d.time + power.shieldDuration;
   if (command === "heal") p.health = Math.min(100, p.health + power.heal);

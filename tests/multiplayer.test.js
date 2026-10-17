@@ -49,17 +49,18 @@ test("two real websocket players join, move, cast and forfeit", async (t) => {
   a.send({
     type: "cast",
     command: "fireball",
-    castToken: castProofs.issue({ command: "fireball", score: 50 }, aid),
+    score: 1000000, // Client-supplied strength must not change fixed damage.
+    castToken: castProofs.issue({ command: "fireball" }, aid),
   });
   await a.wait((m) => m.type === "cast");
   const hit = await b.wait(
-    (m) => m.type === "state" && m.players[1].health === 55,
+    (m) => m.type === "state" && m.players[1].health === 60,
   );
   assert.equal(hit.players[0].health, 100);
   a.send({
     type: "cast",
     command: "fireball",
-    castToken: castProofs.issue({ command: "fireball", score: 50 }, aid),
+    castToken: castProofs.issue({ command: "fireball" }, aid),
   });
   await a.wait((m) => m.type === "error");
   b.ws.close();

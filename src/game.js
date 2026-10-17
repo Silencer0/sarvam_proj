@@ -40,10 +40,38 @@ export const SPELLS = {
 };
 const aliases = {
   fireball: ["fireball", "fire ball", "fire", "attack", "आग", "अग्नि", "हमला"],
-  lightning: ["lightning", "thunder", "electric", "बिजली", "वज्र"],
-  shield: ["shield", "block", "protect", "ढाल", "बचाओ", "रक्षा"],
-  dash: ["dash", "dodge", "भागो", "तेज"],
-  heal: ["heal", "health", "healing", "इलाज", "ठीक", "उपचार"],
+  lightning: [
+    "lightning",
+    "thunder",
+    "electric",
+    "electricity",
+    "thunderbolt",
+    "बिजली",
+    "वज्र",
+  ],
+  shield: [
+    "shield",
+    "block",
+    "protect",
+    "armor",
+    "armour",
+    "ढाल",
+    "बचाओ",
+    "रक्षा",
+  ],
+  dash: ["dash", "dodge", "run", "sprint", "भागो", "तेज"],
+  heal: [
+    "heal",
+    "health",
+    "healing",
+    "treatment",
+    "cure",
+    "recover",
+    "restore",
+    "इलाज",
+    "ठीक",
+    "उपचार",
+  ],
 };
 export function commandFromTranscript(text) {
   const clean = String(text)
@@ -76,8 +104,8 @@ export function damage(g, amount) {
   g.health = Math.max(0, g.health - amount);
   if (!g.health) g.status = "defeat";
 }
-export function cast(g, command, score = 50) {
-  const power = getSpellPower(command, score);
+export function cast(g, command) {
+  const power = getSpellPower(command);
   if (
     g.status !== "playing" ||
     typeof command !== "string" ||

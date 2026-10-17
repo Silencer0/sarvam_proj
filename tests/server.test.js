@@ -46,7 +46,7 @@ test("rejects missing, empty, unsupported and oversized audio", async () => {
     assert.ok([400, 413, 415].includes(response.status));
   }
 });
-test("forwards fixed upstream request and returns only transcript fields", async () => {
+test("accepts a single spoken spell and returns only safe command fields", async () => {
   let captured;
   const response = await request(
     {
@@ -71,20 +71,17 @@ test("forwards fixed upstream request and returns only transcript fields", async
   assert.equal(captured.init.body.get("mode"), "translate");
   assert.equal(captured.init.body.get("language_code"), "unknown");
   assert.equal(captured.init.body.has("keyterms"), false);
-  assert.deepEqual(await response.json(), {
-    transcript: "fireball",
-    language_code: "en-IN",
-    assessment: {
-      accepted: false,
-      command: null,
-      score: 0,
-      feedback:
-        "Rap 4–80 words with original imagery; bare spells and repeated words do not count.",
-      grade: "Keep writing",
-      words: 1,
+  const data = await response.json();
+  assert.equal(typeof data.castToken, "string");
+  assert.deepEqual(
+    { ...data, castToken: "issued" },
+    {
+      transcript: "fireball",
+      language_code: "en-IN",
+      command: "fireball",
+      castToken: "issued",
     },
-    castToken: null,
-  });
+  );
 });
 test("upstream errors never expose response details or credentials", async () => {
   const response = await request(
@@ -99,54 +96,34 @@ test("upstream errors never expose response details or credentials", async () =>
   assert.equal(response.status, 502);
   assert.doesNotMatch(await response.text(), /sensitive|dummy/);
 });
-test("AI accepted bars issue a player-bound score proof; judge failures fail closed", async () => {
+test("single-word commands issue player-bound proofs and unknown words do not cast", async () => {
   const { createCastProofs } = await import("../server/cast-proofs.js");
   const proofs = createCastProofs();
   const playerId = "00000000-0000-0000-0000-000000000001";
   const init = upload();
   init.body.append("playerId", playerId);
-  const base = {
+  const options = (transcript) => ({
     apiKey: "dummy",
     proofs,
     fetchImpl: async () =>
-      new Response(
-        JSON.stringify({
-          transcript: "My molten crown consumes the frozen sky",
-          language_code: "en-IN",
-        }),
-      ),
-  };
-  const assessment = {
-    accepted: true,
-    command: "fireball",
-    score: 88,
-    feedback: "Creative heat imagery",
-    grade: "Legendary lyric",
-    words: 8,
-  };
-  const response = await request(
-    { ...base, judgeImpl: async () => assessment },
-    "/api/transcribe",
-    init,
-  );
+      new Response(JSON.stringify({ transcript, language_code: "en-IN" })),
+  });
+  const response = await request(options("fireball"), "/api/transcribe", init);
   const data = await response.json();
   assert.equal(response.status, 200);
-  assert.deepEqual(data.assessment, assessment);
+  assert.equal(data.command, "fireball");
+  assert.equal("assessment" in data, false);
+  assert.equal("score" in data, false);
   assert.equal(proofs.consume(data.castToken, "fireball"), null);
   assert.deepEqual(proofs.consume(data.castToken, "fireball", playerId), {
     command: "fireball",
-    score: 88,
   });
-  const failed = await request(
-    {
-      ...base,
-      judgeImpl: async () => {
-        throw new Error("sensitive judge detail");
-      },
-    },
-    "/api/transcribe",
-    upload(),
-  );
-  assert.equal(failed.status, 502);
-  assert.doesNotMatch(await failed.text(), /sensitive|castToken/);
+  assert.equal(proofs.consume(data.castToken, "fireball", playerId), null);
+  const unknown = await request(options("banana"), "/api/transcribe", upload());
+  assert.deepEqual(await unknown.json(), {
+    transcript: "banana",
+    language_code: "en-IN",
+    command: null,
+    castToken: null,
+  });
 });

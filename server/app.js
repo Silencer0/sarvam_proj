@@ -1,7 +1,7 @@
 import express from "express";
 import { isOriginAllowed } from "./origins.js";
 import multer from "multer";
-import { judgeRap } from "./rap-judge.js";
+import { commandFromTranscript } from "../src/game.js";
 import { castProofs } from "./cast-proofs.js";
 
 const supported = new Set([
@@ -16,7 +16,6 @@ export function createApp({
   apiKey = "",
   fetchImpl = fetch,
   timeoutMs = 12000,
-  judgeImpl = judgeRap,
   proofs = castProofs,
   allowedOrigins = [],
   trustProxy = false,
@@ -121,23 +120,15 @@ export function createApp({
         const data = await response.json();
         if (typeof data.transcript !== "string")
           throw new Error("Invalid response");
-        const assessment = await judgeImpl(data.transcript, {
-          apiKey,
-          fetchImpl,
-        });
+        const command = commandFromTranscript(data.transcript);
         const subject =
           typeof req.body?.playerId === "string" &&
           /^[a-f0-9-]{36}$/i.test(req.body.playerId)
             ? req.body.playerId
             : "solo";
-        const castToken = assessment.accepted
-          ? proofs.issue(
-              { command: assessment.command, score: assessment.score },
-              subject,
-            )
-          : null;
+        const castToken = command ? proofs.issue({ command }, subject) : null;
         res.json({
-          assessment,
+          command,
           castToken,
           transcript: data.transcript.slice(0, 2000),
           language_code:
@@ -151,7 +142,7 @@ export function createApp({
               : 502,
           )
           .json({
-            error: "Speech or AI rap judging is unavailable. Please try again.",
+            error: "Speech service did not respond. Please try again.",
           });
       }
     },

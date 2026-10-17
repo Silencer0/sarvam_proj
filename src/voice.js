@@ -1,4 +1,4 @@
-import {getApiUrl} from "./endpoints.js";
+import { fetchGameJson } from "./api.js";
 /** Complete, independently decodable utterances; no browser credentials. */
 export function createVoiceController({
   onTranscript = () => {},
@@ -37,9 +37,7 @@ export function createVoiceController({
         throw new Error(
           "Voice requires a modern browser on localhost or HTTPS.",
         );
-      const health = await fetch(getApiUrl("/api/health")).then((response) =>
-        response.json(),
-      );
+      const health = await fetchGameJson("/api/health");
       if (!active || session !== generation) return false;
       if (!health.configured)
         throw new Error(
@@ -138,16 +136,11 @@ export function createVoiceController({
             const playerId = getPlayerId();
             if (playerId) form.append("playerId", playerId);
             try {
-              const response = await fetch(getApiUrl("/api/transcribe"), {
+              const data = await fetchGameJson("/api/transcribe", {
                 method: "POST",
                 body: form,
                 signal: abort.signal,
               });
-              const data = await response.json();
-              if (!response.ok)
-                throw new Error(
-                  data.error || "Speech request failed. Try again.",
-                );
               if (active && session === generation && data.transcript.trim())
                 onTranscript(data.transcript, data);
             } catch (error) {
@@ -195,7 +188,7 @@ export function createVoiceController({
           onStatus("hearing");
         }
         if (
-          (heard && (now - lastSpeech > 900 || now - firstSpeech >= 10000)) ||
+          (heard && (now - lastSpeech > 650 || now - firstSpeech >= 10000)) ||
           (!heard && now - started >= 5000)
         )
           recorder.stop();

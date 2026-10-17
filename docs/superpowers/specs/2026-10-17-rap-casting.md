@@ -1,3 +1,5 @@
+> Superseded by `2026-10-17-voice-commands.md`: the user removed rap and scoring. This document records the earlier design only.
+
 # Multilingual AI-judged rap spellcasting
 
 Both solo and PvP cast from rap lyrics rather than bare spell names. Sarvam Saaras v4 automatically detects and translates supported speech to English. Sarvam-105B then chooses the spell topic and judges the translated lyric: topic relevance 40 points, creativity 30, wordplay/rhyme 20, coherence 10. Audio cadence and accent are not assessed. Translation may change native-language rhyme and wordplay.

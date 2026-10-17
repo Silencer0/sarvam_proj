@@ -54,14 +54,11 @@ test("actual client transport joins a duel and receives authoritative shield/cas
   await until(() => stateA?.phase === "waiting");
   assert.equal(b.join(stateA.roomCode), true);
   await until(() => stateA?.phase === "playing" && stateB?.phase === "playing");
-  a.cast("shield", castProofs.issue({ command: "shield", score: 50 }, a.id));
+  a.cast("shield", castProofs.issue({ command: "shield" }, a.id));
   await until(
     () => stateA.players.find((p) => p.id === a.id).shieldUntil > stateA.time,
   );
-  b.cast(
-    "fireball",
-    castProofs.issue({ command: "fireball", score: 50 }, b.id),
-  );
+  b.cast("fireball", castProofs.issue({ command: "fireball" }, b.id));
   await until(() =>
     casts.some(
       (event) => event.playerId === b.id && event.command === "fireball",
