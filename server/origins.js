@@ -13,3 +13,18 @@ export function isOriginAllowed(origin, host, allowedOrigins = []) {
     return false;
   }
 }
+
+/** Vite changes the upstream Host; explicitly permit its loopback origins only in development. */
+export function getAllowedOrigins(env = process.env) {
+  const configured = (env.ALLOWED_ORIGINS || "")
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
+  if (env.NODE_ENV !== "production") {
+    for (const host of ["localhost", "127.0.0.1", "[::1]"]) {
+      for (const port of [5173, 4173])
+        configured.push(`http://${host}:${port}`);
+    }
+  }
+  return [...new Set(configured)];
+}

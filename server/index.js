@@ -4,13 +4,11 @@ import { fileURLToPath } from "node:url";
 import { resolve, dirname } from "node:path";
 import { existsSync } from "node:fs";
 import { createApp } from "./app.js";
+import { getAllowedOrigins } from "./origins.js";
 import { attachMultiplayer } from "./multiplayer.js";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 dotenv.config({ path: resolve(root, ".env"), quiet: true });
-const allowedOrigins = (process.env.ALLOWED_ORIGINS || "")
-  .split(",")
-  .map((value) => value.trim())
-  .filter(Boolean);
+const allowedOrigins = getAllowedOrigins();
 const app = createApp({
   apiKey: process.env.SARVAM_API_KEY || "",
   allowedOrigins,

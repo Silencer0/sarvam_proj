@@ -483,6 +483,7 @@ function perform(command) {
 const voice = createVoiceController({
   getPlayerId: () => (mode === "pvp" ? duelId : ""),
   onTranscript: (text, data) => {
+    $("#reconnect").hidden = true;
     $("#transcript").textContent = `“${text}”`;
     const command = commandFromTranscript(text);
     if (command && started) {
@@ -503,7 +504,7 @@ const voice = createVoiceController({
               ? "Hearing your magic…"
               : String(status);
   },
-  onError: (error) => {
+  onError: (error, kind = "microphone") => {
     const message =
       typeof error === "string"
         ? error
@@ -512,8 +513,14 @@ const voice = createVoiceController({
     $("#start-error").textContent = message;
     if (started || duel) {
       $("#reconnect").hidden = false;
+      $("#reconnect").textContent =
+        kind === "service"
+          ? "Retry speech service ↗"
+          : "Reconnect microphone ↗";
       $("#transcript").textContent =
-        "Microphone interrupted · reconnect to cast";
+        kind === "service"
+          ? "Speech service unavailable · retry when ready"
+          : "Microphone interrupted · reconnect to cast";
     }
     toast(message);
   },
@@ -556,7 +563,7 @@ $("#start").onclick = async () => {
 $("#reconnect").onclick = async () => {
   if ((await voice.start()) === true) {
     $("#reconnect").hidden = true;
-    toast("Microphone connected");
+    toast("Voice casting ready");
   }
 };
 function end() {

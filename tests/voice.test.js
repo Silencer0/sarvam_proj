@@ -196,3 +196,99 @@ test("late speech gets ten seconds from speech onset and silence rolls over", as
   tick();
   assert.equal(stopped, 2);
 });
+
+test("health service failures are classified without requesting microphone access", async (t) => {
+  let requests = 0;
+  browser(t, async () => {
+    requests++;
+    throw Error("unexpected capture");
+  });
+  globalThis.fetch = async () =>
+    new Response(
+      JSON.stringify({ error: "This frontend origin is not allowed." }),
+      { status: 403 },
+    );
+  const errors = [],
+    statuses = [];
+  const voice = createVoiceController({
+    onError: (message, kind) => errors.push({ message, kind }),
+    onStatus: (s) => statuses.push(s),
+  });
+  assert.equal(await voice.start(), false);
+  assert.equal(requests, 0);
+  assert.equal(errors[0].kind, "service");
+  assert.match(errors[0].message, /origin/);
+  assert.equal(statuses.at(-1), "service-error");
+});
+
+test("permanent transcription failures stop capture once and report service errors", async (t) => {
+  for (const status of [403, 503]) {
+    let released = 0,
+      tick,
+      recorder,
+      finish,
+      requests = 0;
+    browser(t, async () => ({
+      getTracks: () => [
+        {
+          stop() {
+            released++;
+          },
+        },
+      ],
+    }));
+    t.mock.method(globalThis, "setInterval", (callback) => {
+      tick = callback;
+      return 1;
+    });
+    t.mock.method(globalThis, "clearInterval", () => {});
+    const Context = window.AudioContext;
+    window.AudioContext = class extends Context {
+      createAnalyser() {
+        return {
+          fftSize: 1024,
+          getFloatTimeDomainData(a) {
+            a.fill(0.1);
+          },
+        };
+      }
+    };
+    const Recorder = globalThis.MediaRecorder;
+    globalThis.MediaRecorder = class extends Recorder {
+      constructor() {
+        super();
+        recorder = this;
+      }
+      stop() {
+        this.state = "inactive";
+        this.ondataavailable?.({ data: new Blob(["audio"]) });
+        finish = this.onstop?.();
+      }
+    };
+    globalThis.fetch = async () => {
+      requests++;
+      return requests === 1
+        ? new Response(JSON.stringify({ configured: true }))
+        : new Response(JSON.stringify({ error: "Speech unavailable" }), {
+            status,
+          });
+    };
+    const errors = [],
+      statuses = [];
+    const voice = createVoiceController({
+      onError: (message, kind) => errors.push({ message, kind }),
+      onStatus: (s) => statuses.push(s),
+    });
+    assert.equal(await voice.start(), true);
+    tick();
+    recorder.stop();
+    await finish;
+    assert.equal(errors.length, 1);
+    assert.equal(errors[0].kind, "service");
+    assert.equal(statuses.at(-1), "service-error");
+    assert.equal(released, 1);
+    tick();
+    assert.equal(requests, 2);
+    voice.stop();
+  }
+});

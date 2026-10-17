@@ -6,7 +6,7 @@ export function createVoiceController({
   onStatus = () => {},
   onError = () => {},
 } = {}) {
-  let stream, context, source, analyser, recorder, interval, abort;
+  let stream, context, source, analyser, recorder, interval, abort, retryTimer;
   let active = false,
     generation = 0,
     pending = false;
@@ -14,6 +14,7 @@ export function createVoiceController({
     active = false;
     generation++;
     clearInterval(interval);
+    clearTimeout(retryTimer);
     abort?.abort();
     abort = null;
     if (recorder && recorder.state !== "inactive") recorder.stop();
@@ -32,17 +33,20 @@ export function createVoiceController({
     const session = generation;
     active = true;
     onStatus("connecting");
+    let errorKind = "microphone";
     try {
       if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder)
         throw new Error(
           "Voice requires a modern browser on localhost or HTTPS.",
         );
+      errorKind = "service";
       const health = await fetchGameJson("/api/health");
       if (!active || session !== generation) return false;
       if (!health.configured)
         throw new Error(
           "Speech engine is not configured. Add SARVAM_API_KEY to .env and restart the server.",
         );
+      errorKind = "microphone";
       const captured = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: true,
@@ -135,6 +139,7 @@ export function createVoiceController({
             );
             const playerId = getPlayerId();
             if (playerId) form.append("playerId", playerId);
+            let retryDelay = 0;
             try {
               const data = await fetchGameJson("/api/transcribe", {
                 method: "POST",
@@ -148,13 +153,26 @@ export function createVoiceController({
                 active &&
                 session === generation &&
                 error.name !== "AbortError"
-              )
-                onError(error.message || "Speech engine unavailable.");
+              ) {
+                if ([403, 503].includes(error.status)) {
+                  stop();
+                  onStatus("service-error");
+                } else retryDelay = 2000;
+                onError(
+                  error.message || "Speech engine unavailable.",
+                  "service",
+                );
+              }
             } finally {
               if (active && session === generation) {
-                pending = false;
-                onStatus("listening");
-                record();
+                const resume = () => {
+                  if (!active || session !== generation) return;
+                  pending = false;
+                  onStatus("listening");
+                  record();
+                };
+                if (retryDelay) retryTimer = setTimeout(resume, retryDelay);
+                else resume();
               }
             }
           };
@@ -203,7 +221,9 @@ export function createVoiceController({
           : error.name === "NotFoundError"
             ? "No microphone found. Connect a microphone and retry."
             : error.message || "Cannot connect to the speech engine.",
+        errorKind,
       );
+      if (errorKind === "service") onStatus("service-error");
       return false;
     }
   }

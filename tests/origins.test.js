@@ -82,3 +82,22 @@ test("WebSocket upgrade enforces the same explicit frontend origin", async (t) =
   const error = await new Promise((resolve) => blocked.once("error", resolve));
   assert.match(error.message, /401/);
 });
+test("development proxy origins are allowed locally but never implicitly in production", async () => {
+  const { getAllowedOrigins } = await import("../server/origins.js");
+  const local = getAllowedOrigins({});
+  assert.ok(local.includes("http://localhost:5173"));
+  assert.ok(local.includes("http://127.0.0.1:5173"));
+  assert.equal(
+    isOriginAllowed("http://localhost:5173", "localhost:3001", local),
+    true,
+  );
+  const prod = getAllowedOrigins({
+    NODE_ENV: "production",
+    ALLOWED_ORIGINS: "https://echo-arena-bice.vercel.app",
+  });
+  assert.deepEqual(prod, ["https://echo-arena-bice.vercel.app"]);
+  assert.equal(
+    isOriginAllowed("http://localhost:5173", "backend.onrender.com", prod),
+    false,
+  );
+});
