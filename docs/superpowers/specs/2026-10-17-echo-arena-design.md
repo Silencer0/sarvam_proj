@@ -1,12 +1,29 @@
 # Echo Arena design
 
-Build a browser game for a fast, playable voice-combat demonstration. The approved direction is a polished cartoon wizard survival arena, rendered entirely in 3D. WASD controls movement; all combat uses spoken commands. Commands are fireball, lightning, shield, dash, and heal. Auto-targeting selects nearby enemies so speech latency does not require precise aiming. Enemy waves escalate, with health, cooldowns, score, defeat, and restart completing the loop.
+## Product scope
+
+Build a polished cartoon voice-combat browser game rendered entirely in 3D. The user authorized fast parallel implementation, regular pushes, and the extension to two-player PvP. Solo survival remains available. WASD or arrow keys move the player; every combat ability uses a spoken command: fireball, lightning, shield, dash, or heal.
+
+Solo mode uses automatic targeting and escalating enemy waves, with health, cooldowns, score, victory, defeat, and restart completing the loop. PvP mode lets one player create a room code and a second player join that room on the same server. Two participants fight until one loses all health or disconnects. A disconnect forfeits the match; a rematch uses a new room.
 
 ## Architecture
-Vite and Three.js render the arena and game HUD. A Node server accepts short microphone audio recordings and calls Sarvam speech-to-text. The browser never receives the API key. The key exists only in an ignored root .env, and .env.example contains an empty setting. Requests have file size limits, timeouts, and safe errors. Recognized transcripts map to a fixed command vocabulary; no arbitrary code or actions run from transcripts.
+
+Vite and Three.js render the arena and HUD. A Node/Express server accepts short microphone recordings and calls Sarvam speech-to-text. The root `.env` holds `SARVAM_API_KEY` and is ignored by Git; the browser never receives the key. `.env.example` contains an empty setting. The speech proxy enforces upload limits and timeouts and returns safe errors. Transcripts map to a fixed vocabulary in the browser.
+
+Native WebSockets at `/ws` carry PvP room events, movement intent, spell commands, and state snapshots. The server owns movement, health, cooldowns, ranges, and combat outcomes. The client renders server state and sends intent rather than choosing its health or damage. Solo state remains local. Production serves the built client and API from the same Node server.
+
+## PvP combat rules
+
+Players start with 100 health. Fireball deals 40 damage within 12 arena units and has a 1.2-second cooldown. Lightning deals 75 damage within 7 units and has a 5-second cooldown. Shield blocks damage for 2.5 seconds and has an 8-second cooldown. Dash moves 3 units and has a 3-second cooldown. Heal restores 30 health up to 100 and has a 14-second cooldown. Cooldown durations match solo mode. The authoritative server rejects invalid actions and prevents clients from bypassing cooldowns.
 
 ## Experience
-A clear entry screen explains microphone permission and the commands. A live listening indicator, transcript, recognized action, and cooldown feedback make voice control understandable. A muted teal/cream interface frames a colorful low-poly courtyard. Enemies telegraph attacks and spells have distinct effects. Microphone errors and unavailable credentials are visible. Sound can be muted.
+
+The entry screen explains microphone permission and offers solo, create-room, and join-room paths. Room waiting and opponent disconnect outcomes are visible. Listening, transcription, recognized action, health, and cooldown feedback explain voice control. A teal and cream interface frames a colorful low-poly courtyard. Solo enemies telegraph attacks and spells have distinct effects. Microphone errors and unavailable credentials are actionable. Sound can be muted.
+
+## Hosting boundary
+
+Two browsers on one machine can share the localhost development server. Remote opponents must open the same publicly reachable HTTPS deployment. Its reverse proxy must forward WebSocket upgrades for `/ws`; HTTPS clients use WSS. Room codes do not provide NAT traversal. This workspace does not itself provide a public deployment. Credentials remain server-side in every mode.
 
 ## Assets and verification
-Use open-source or CC0 character/environment assets and music/sound with a checked-in attribution manifest. Test transcript mapping, cooldown and health rules, and the backend security boundary. Run a production build and browser smoke check. README covers setup, .env, API requirements, command vocabulary, controls, architecture, assets, and limitations. Commit and push verified milestones as requested.
+
+Use verified CC0 Kenney character/environment assets and music/sounds with checked-in licenses and a manifest. Verify solo rules, speech validation and credential isolation, then room lifecycle, authoritative PvP state, combat rules, disconnect forfeits, and WebSocket integration. Run the production build and scan tracked/staged files and output for secrets without printing matches. Browser rendering and real microphone behavior need manual verification when browser automation is unavailable. See `docs/verification.md` for evidence and outstanding checks.
