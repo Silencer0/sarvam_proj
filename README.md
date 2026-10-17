@@ -31,13 +31,13 @@ Never put the key in a `VITE_` variable, frontend source, screenshots, logs, or 
 
 Use **WASD** or arrow keys to move. Speak a short, clear command to cast:
 
-| Command     | Ability                               |
-| ----------- | ------------------------------------- |
-| “Fireball”  | Launch a fire attack                  |
-| “Lightning” | Strike nearby enemies                 |
-| “Shield”    | Protect yourself from incoming damage |
-| “Dash”      | Make a quick escape                   |
-| “Heal”      | Restore health                        |
+| Command        | Ability                               |
+| -------------- | ------------------------------------- |
+| “Fireball”     | Launch a fire attack                  |
+| “Lightning”    | Strike nearby enemies                 |
+| “Raise shield” | Protect yourself from incoming damage |
+| “Dash”         | Make a quick escape                   |
+| “Healing”      | Restore health                        |
 
 Combat abilities are voice controlled. Watch the command feedback and ability cooldowns, and leave a short pause between commands. Enable sound after interacting with the page; browsers block autoplay before a user gesture.
 

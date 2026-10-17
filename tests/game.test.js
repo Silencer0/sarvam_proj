@@ -57,3 +57,13 @@ test("translated single-word commands resolve common native-language meanings", 
   assert.equal(commandFromTranscript("Treatment"), "heal");
   assert.equal(commandFromTranscript("Armor"), "shield");
 });
+test("common Sarvam mishearings of short spell words still cast", () => {
+  assert.equal(commandFromTranscript("Heel."), "heal");
+  assert.equal(commandFromTranscript("Hill."), "heal");
+  assert.equal(commandFromTranscript("He'll"), "heal");
+  assert.equal(commandFromTranscript("Sheild!"), "shield");
+  assert.equal(commandFromTranscript("Lighting."), "lightning");
+  assert.equal(commandFromTranscript("Fire bowl"), "fireball");
+  assert.equal(commandFromTranscript("Race Shield."), "shield");
+  assert.equal(commandFromTranscript("Healing."), "heal");
+});
