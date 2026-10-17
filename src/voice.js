@@ -1,3 +1,4 @@
+import {getApiUrl} from "./endpoints.js";
 /** Complete, independently decodable utterances; no browser credentials. */
 export function createVoiceController({
   onTranscript = () => {},
@@ -36,7 +37,7 @@ export function createVoiceController({
         throw new Error(
           "Voice requires a modern browser on localhost or HTTPS.",
         );
-      const health = await fetch("/api/health").then((response) =>
+      const health = await fetch(getApiUrl("/api/health")).then((response) =>
         response.json(),
       );
       if (!active || session !== generation) return false;
@@ -137,7 +138,7 @@ export function createVoiceController({
             const playerId = getPlayerId();
             if (playerId) form.append("playerId", playerId);
             try {
-              const response = await fetch("/api/transcribe", {
+              const response = await fetch(getApiUrl("/api/transcribe"), {
                 method: "POST",
                 body: form,
                 signal: abort.signal,

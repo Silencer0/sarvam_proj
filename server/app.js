@@ -1,4 +1,5 @@
 import express from "express";
+import { isOriginAllowed } from "./origins.js";
 import multer from "multer";
 import { judgeRap } from "./rap-judge.js";
 import { castProofs } from "./cast-proofs.js";
@@ -17,9 +18,27 @@ export function createApp({
   timeoutMs = 12000,
   judgeImpl = judgeRap,
   proofs = castProofs,
+  allowedOrigins = [],
+  trustProxy = false,
 } = {}) {
   const app = express();
   app.disable("x-powered-by");
+  if (trustProxy) app.set("trust proxy", 1);
+  app.use((req, res, next) => {
+    const origin = req.headers.origin;
+    if (!isOriginAllowed(origin, req.headers.host, allowedOrigins))
+      return res
+        .status(403)
+        .json({ error: "This frontend origin is not allowed." });
+    if (origin) {
+      res.setHeader("Access-Control-Allow-Origin", origin);
+      res.vary("Origin");
+      res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+      res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+    }
+    if (req.method === "OPTIONS") return res.sendStatus(204);
+    next();
+  });
   app.use((req, res, next) => {
     res.setHeader("Cache-Control", "no-store");
     next();

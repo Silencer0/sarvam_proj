@@ -9,9 +9,19 @@ import {
   forfeit,
   snapshot,
 } from "./duel.js";
+import { isOriginAllowed } from "./origins.js";
 import { castProofs } from "./cast-proofs.js";
-export function attachMultiplayer(server, { proofs = castProofs } = {}) {
-  const wss = new WebSocketServer({ server, path: "/ws", maxPayload: 1024 });
+export function attachMultiplayer(
+  server,
+  { proofs = castProofs, allowedOrigins = [] } = {},
+) {
+  const wss = new WebSocketServer({
+    server,
+    path: "/ws",
+    maxPayload: 1024,
+    verifyClient: (info) =>
+      isOriginAllowed(info.origin, info.req.headers.host, allowedOrigins),
+  });
   const rooms = new Map();
   const send = (ws, data) => {
     if (ws.readyState === WebSocket.OPEN && ws.bufferedAmount < 65536)

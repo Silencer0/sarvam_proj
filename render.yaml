@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: echo-arena-backend
+    runtime: docker
+    plan: free
+    region: singapore
+    numInstances: 1
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: TRUST_PROXY
+        value: "1"
+      - key: SARVAM_API_KEY
+        sync: false
+      - key: ALLOWED_ORIGINS
+        sync: false

@@ -1,0 +1,11 @@
+.git
+.env
+.env.*
+node_modules
+server
+tests
+docs
+Dockerfile
+render.yaml
+
+dist

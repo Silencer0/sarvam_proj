@@ -7,7 +7,15 @@ import { createApp } from "./app.js";
 import { attachMultiplayer } from "./multiplayer.js";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 dotenv.config({ path: resolve(root, ".env"), quiet: true });
-const app = createApp({ apiKey: process.env.SARVAM_API_KEY || "" });
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || "")
+  .split(",")
+  .map((value) => value.trim())
+  .filter(Boolean);
+const app = createApp({
+  apiKey: process.env.SARVAM_API_KEY || "",
+  allowedOrigins,
+  trustProxy: process.env.TRUST_PROXY === "1",
+});
 const dist = resolve(root, "dist");
 if (existsSync(resolve(dist, "index.html"))) {
   app.use(express.static(dist, { dotfiles: "deny" }));
@@ -21,4 +29,4 @@ const server = app.listen(Number(process.env.PORT) || 3001, "0.0.0.0", () =>
   console.log("Echo Arena server ready."),
 );
 
-attachMultiplayer(server);
+attachMultiplayer(server, { allowedOrigins });

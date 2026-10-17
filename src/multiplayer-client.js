@@ -1,3 +1,4 @@
+import {getWebSocketUrl} from "./endpoints.js";
 /** Native WebSocket transport. No combat simulation or credentials live here. */
 export function createMultiplayerClient({
   onState,
@@ -20,7 +21,7 @@ export function createMultiplayerClient({
     return new Promise((resolve, reject) => {
       let welcomed = false;
       const current = new WebSocket(
-        `${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/ws`,
+        getWebSocketUrl(),
       );
       socket = current;
       const timer = setTimeout(() => {

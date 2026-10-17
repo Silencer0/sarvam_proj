@@ -101,3 +101,17 @@ All bundled character, environment, music, and sound assets are **CC0** assets b
 - [Music Jingles](https://kenney.nl/assets/music-jingles): short looping background jingle and victory cue.
 
 The music is a short licensed jingle loop, not a full-length soundtrack. Original license notices are in `public/assets/licenses/`. [Asset attribution](public/assets/ATTRIBUTION.md) and the [asset manifest](public/assets/manifest.json) record the original filenames and sources. Three.js is distributed under the MIT license; other package licenses remain with their respective authors.
+
+## Deploy: Vercel frontend + Render backend
+
+The checked-in `vercel.json` deploys the Vite client. The `render.yaml` Blueprint deploys one Docker-based Node backend. Keep exactly **one backend instance**: PvP rooms, live simulation and single-use cast proofs are currently held in memory. Restarting or redeploying that service ends active duels.
+
+1. [Create the Render backend from this repository](https://render.com/deploy?repo=https://github.com/Silencer0/sarvam_proj). The Blueprint uses the free plan; it can sleep and cold-start. Use an always-on plan for a continuously available game if you choose to upgrade. Set `SARVAM_API_KEY` privately in Render using your local `.env` value. Set `ALLOWED_ORIGINS` to your exact Vercel frontend origin; it accepts comma-separated origins if you also need a preview URL. `TRUST_PROXY=1` is configured for Render's reverse proxy.
+2. Copy the backend's actual HTTPS URL, such as `https://your-service.onrender.com`. Check `/api/health`; it should return `{"configured":true}`. The backend also serves a same-origin copy of the game, which can be used for initial verification.
+3. Import this repository into Vercel with the Vite preset, or run `npx vercel login` and `npx vercel --prod`. Set **only the public** `VITE_BACKEND_URL` build variable to that backend origin. It must be an HTTPS origin with no path or credentials. Never set `SARVAM_API_KEY` as a frontend build variable or any `VITE_` variable.
+4. Set Render's `ALLOWED_ORIGINS` to the resulting exact Vercel URL (no trailing slash), then redeploy the Vercel frontend after setting `VITE_BACKEND_URL`. The browser sends API requests and WSS connections directly to that backend; both reach the same Node instance.
+5. Verify microphone permission, a scored bar, and a two-player duel from the Vercel URL. Preview domains must be explicitly allowed too. Do not use a wildcard origin for the speech proxy.
+
+Vercel currently supports WebSockets, but separate connections need not land on the same Function instance. The current in-memory backend therefore stays on Render; deploying it directly as Vercel Functions would require shared room state, authoritative simulation ownership and atomic proof consumption. See [Vercel's persistent-state guidance](https://vercel.com/docs/functions/websockets#manage-persistent-state).
+
+`.vercelignore` excludes the backend, tests and `.env` files from frontend upload. `.dockerignore` excludes `.env` from container builds. Docker execution was not verified locally if a Docker daemon is unavailable; the normal production build and automated network tests remain the local checks.

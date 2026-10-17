@@ -1,3 +1,4 @@
+import {getApiUrl} from "./endpoints.js";
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { clone as cloneSkeleton } from "three/addons/utils/SkeletonUtils.js";
@@ -582,7 +583,7 @@ $("#start").onclick = async () => {
   button.textContent = "Connecting your microphone…";
   $("#start-error").textContent = "";
   try {
-    const health = await fetch("/api/health").then((r) => r.json());
+    const health = await fetch(getApiUrl("/api/health")).then((r) => r.json());
     if (!health.configured)
       throw Error(
         "Add your Sarvam API key to the server .env, then restart the server.",
