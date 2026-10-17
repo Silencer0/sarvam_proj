@@ -1,0 +1,156 @@
+{
+  "license": "CC0-1.0",
+  "author": "Kenney",
+  "assets": [
+    {
+      "path": "/assets/models/banner.glb",
+      "original": "Models/GLB format/banner.glb",
+      "pack": "Mini Arena"
+    },
+    {
+      "path": "/assets/models/block.glb",
+      "original": "Models/GLB format/block.glb",
+      "pack": "Mini Arena"
+    },
+    {
+      "path": "/assets/models/border-corner.glb",
+      "original": "Models/GLB format/border-corner.glb",
+      "pack": "Mini Arena"
+    },
+    {
+      "path": "/assets/models/border-straight.glb",
+      "original": "Models/GLB format/border-straight.glb",
+      "pack": "Mini Arena"
+    },
+    {
+      "path": "/assets/models/bricks.glb",
+      "original": "Models/GLB format/bricks.glb",
+      "pack": "Mini Arena"
+    },
+    {
+      "path": "/assets/models/character-soldier.glb",
+      "original": "Models/GLB format/character-soldier.glb",
+      "pack": "Mini Arena"
+    },
+    {
+      "path": "/assets/models/column-damaged.glb",
+      "original": "Models/GLB format/column-damaged.glb",
+      "pack": "Mini Arena"
+    },
+    {
+      "path": "/assets/models/column.glb",
+      "original": "Models/GLB format/column.glb",
+      "pack": "Mini Arena"
+    },
+    {
+      "path": "/assets/models/floor-detail.glb",
+      "original": "Models/GLB format/floor-detail.glb",
+      "pack": "Mini Arena"
+    },
+    {
+      "path": "/assets/models/floor.glb",
+      "original": "Models/GLB format/floor.glb",
+      "pack": "Mini Arena"
+    },
+    {
+      "path": "/assets/models/stairs-corner-inner.glb",
+      "original": "Models/GLB format/stairs-corner-inner.glb",
+      "pack": "Mini Arena"
+    },
+    {
+      "path": "/assets/models/stairs-corner.glb",
+      "original": "Models/GLB format/stairs-corner.glb",
+      "pack": "Mini Arena"
+    },
+    {
+      "path": "/assets/models/stairs.glb",
+      "original": "Models/GLB format/stairs.glb",
+      "pack": "Mini Arena"
+    },
+    {
+      "path": "/assets/models/statue.glb",
+      "original": "Models/GLB format/statue.glb",
+      "pack": "Mini Arena"
+    },
+    {
+      "path": "/assets/models/Textures/colormap.png",
+      "original": "Models/GLB format/Textures/colormap.png",
+      "pack": "Mini Arena"
+    },
+    {
+      "path": "/assets/models/tree.glb",
+      "original": "Models/GLB format/tree.glb",
+      "pack": "Mini Arena"
+    },
+    {
+      "path": "/assets/models/trophy.glb",
+      "original": "Models/GLB format/trophy.glb",
+      "pack": "Mini Arena"
+    },
+    {
+      "path": "/assets/models/wall-corner.glb",
+      "original": "Models/GLB format/wall-corner.glb",
+      "pack": "Mini Arena"
+    },
+    {
+      "path": "/assets/models/wall-gate.glb",
+      "original": "Models/GLB format/wall-gate.glb",
+      "pack": "Mini Arena"
+    },
+    {
+      "path": "/assets/models/wall.glb",
+      "original": "Models/GLB format/wall.glb",
+      "pack": "Mini Arena"
+    },
+    {
+      "path": "/assets/models/weapon-rack.glb",
+      "original": "Models/GLB format/weapon-rack.glb",
+      "pack": "Mini Arena"
+    },
+    {
+      "path": "/assets/models/weapon-spear.glb",
+      "original": "Models/GLB format/weapon-spear.glb",
+      "pack": "Mini Arena"
+    },
+    {
+      "path": "/assets/models/weapon-sword.glb",
+      "original": "Models/GLB format/weapon-sword.glb",
+      "pack": "Mini Arena"
+    },
+    {
+      "path": "/assets/audio/cast.ogg",
+      "original": "Audio/impactGlass_medium_000.ogg",
+      "pack": "impact-sounds"
+    },
+    {
+      "path": "/assets/audio/hit.ogg",
+      "original": "Audio/impactPunch_heavy_000.ogg",
+      "pack": "impact-sounds"
+    },
+    {
+      "path": "/assets/audio/shield.ogg",
+      "original": "Audio/impactMetal_light_000.ogg",
+      "pack": "impact-sounds"
+    },
+    {
+      "path": "/assets/audio/step.ogg",
+      "original": "Audio/footstep_grass_000.ogg",
+      "pack": "impact-sounds"
+    },
+    {
+      "path": "/assets/audio/music.ogg",
+      "original": "Audio/Pizzicato jingles/jingles_PIZZI00.ogg",
+      "pack": "music-jingles"
+    },
+    {
+      "path": "/assets/audio/victory.ogg",
+      "original": "Audio/Steel jingles/jingles_STEEL16.ogg",
+      "pack": "music-jingles"
+    }
+  ],
+  "sources": {
+    "Mini Arena": "https://kenney.nl/assets/mini-arena",
+    "impact-sounds": "https://kenney.nl/assets/impact-sounds",
+    "music-jingles": "https://kenney.nl/assets/music-jingles"
+  }
+}

@@ -1,0 +1,70 @@
+# Echo Arena
+
+A browser-based 3D survival arena where your voice casts every combat ability. Move through a bright cartoon battleground, keep enemies at a distance, and speak your next spell. Speech recognition runs through Sarvam AI via a local server that keeps the API key out of browser code.
+
+## Quick start
+
+Requires Node.js 20.19+ or 22.12+, npm, an internet connection, and a Sarvam API key with speech-to-text access.
+
+```bash
+npm install
+cp .env.example .env
+```
+
+Set the following value in the local `.env` file:
+
+```dotenv
+SARVAM_API_KEY=your_sarvam_api_key
+```
+
+Then start both services:
+
+```bash
+npm run dev
+```
+
+Open **http://localhost:5173**. The API server listens on **http://localhost:3001**; Vite proxies API requests to it. Allow microphone access when prompted, then use the in-game voice control to start listening.
+
+Never put the key in a `VITE_` variable, frontend source, screenshots, logs, or commits. `.env` is ignored by Git; `.env.example` contains a placeholder only.
+
+## Play
+
+Use **WASD** or arrow keys to move. Speak a short, clear command to cast:
+
+| Command | Ability |
+| --- | --- |
+| “Fireball” | Launch a fire attack |
+| “Lightning” | Strike nearby enemies |
+| “Shield” | Protect yourself from incoming damage |
+| “Dash” | Make a quick escape |
+| “Heal” | Restore health |
+
+Combat abilities are voice controlled. Watch the command feedback and ability cooldowns, and leave a short pause between commands. Enable sound after interacting with the page; browsers block autoplay before a user gesture.
+
+## How it works
+
+The browser records microphone audio and sends it to the same-origin API. The Node/Express proxy reads `SARVAM_API_KEY` from `.env`, submits audio to Sarvam speech-to-text, and returns the transcript and detected language. The client resolves the transcript into a recognized command and applies it to the Three.js arena. The API key stays on the server.
+
+Microphone capture requires **localhost or HTTPS** and explicit permission. Use a current browser with WebGL, MediaRecorder, and microphone support. Headphones reduce game audio leaking into recognition. If the microphone is unavailable, check browser permissions, the selected input device, and whether another application is using it.
+
+## Development
+
+```bash
+npm test       # Automated tests
+npm run build # Production client bundle in dist/
+npm start     # Start the API server
+```
+
+For deployment, serve the built client and API under one HTTPS origin and supply the key through the server environment. Do not expose an unrestricted public speech proxy: add authentication, request limits, and usage monitoring appropriate to your deployment.
+
+Speech recognition requires network access and an active Sarvam account. Commands have recording, upload, and transcription latency; this is a deliberate-paced voice game rather than an instant-response fighting game. Recognition can vary with microphone quality, background noise, accent, and network conditions. API calls can consume paid Sarvam usage; check your account limits and pricing before long sessions. No offline speech fallback is included.
+
+## Open assets
+
+All bundled character, environment, music, and sound assets are **CC0** assets by [Kenney](https://kenney.nl/assets):
+
+- [Mini Arena](https://kenney.nl/assets/mini-arena): cartoon soldier, arena architecture, props, and vegetation.
+- [Impact Sounds](https://kenney.nl/assets/impact-sounds): casting, hit, shield, and footstep cues.
+- [Music Jingles](https://kenney.nl/assets/music-jingles): short looping background jingle and victory cue.
+
+The music is a short licensed jingle loop, not a full-length soundtrack. Original license notices are in `public/assets/licenses/`. [Asset attribution](public/assets/ATTRIBUTION.md) and the [asset manifest](public/assets/manifest.json) record the original filenames and sources. Three.js is distributed under the MIT license; other package licenses remain with their respective authors.
