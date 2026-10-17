@@ -1,5 +1,7 @@
 import express from "express";
 import multer from "multer";
+import { judgeRap } from "./rap-judge.js";
+import { castProofs } from "./cast-proofs.js";
 
 const supported = new Set([
   "audio/webm",
@@ -13,6 +15,8 @@ export function createApp({
   apiKey = "",
   fetchImpl = fetch,
   timeoutMs = 12000,
+  judgeImpl = judgeRap,
+  proofs = castProofs,
 } = {}) {
   const app = express();
   app.disable("x-powered-by");
@@ -76,12 +80,8 @@ export function createApp({
           }[req.file.mimetype] || "webm"),
       );
       form.append("model", "saaras:v4");
-      form.append("mode", "transcribe");
+      form.append("mode", "translate");
       form.append("language_code", "unknown");
-      form.append(
-        "keyterms",
-        JSON.stringify(["fireball", "lightning", "shield", "dash", "heal"]),
-      );
       try {
         const response = await fetchImpl(
           "https://api.sarvam.ai/speech-to-text",
@@ -102,7 +102,24 @@ export function createApp({
         const data = await response.json();
         if (typeof data.transcript !== "string")
           throw new Error("Invalid response");
+        const assessment = await judgeImpl(data.transcript, {
+          apiKey,
+          fetchImpl,
+        });
+        const subject =
+          typeof req.body?.playerId === "string" &&
+          /^[a-f0-9-]{36}$/i.test(req.body.playerId)
+            ? req.body.playerId
+            : "solo";
+        const castToken = assessment.accepted
+          ? proofs.issue(
+              { command: assessment.command, score: assessment.score },
+              subject,
+            )
+          : null;
         res.json({
+          assessment,
+          castToken,
           transcript: data.transcript.slice(0, 2000),
           language_code:
             typeof data.language_code === "string" ? data.language_code : null,
@@ -114,7 +131,9 @@ export function createApp({
               ? 504
               : 502,
           )
-          .json({ error: "Speech service did not respond. Please try again." });
+          .json({
+            error: "Speech or AI rap judging is unavailable. Please try again.",
+          });
       }
     },
   );

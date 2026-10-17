@@ -150,3 +150,49 @@ test("recorder construction failure returns false and releases capture", async (
   assert.equal(released, 1);
   assert.match(errors[0], /reconnect/i);
 });
+test("late speech gets ten seconds from speech onset and silence rolls over", async (t) => {
+  browser(t, async () => ({ getTracks: () => [{ stop() {} }] }));
+  let now = 0,
+    tick,
+    volume = 0,
+    stopped = 0;
+  t.mock.method(performance, "now", () => now);
+  t.mock.method(globalThis, "setInterval", (callback) => {
+    tick = callback;
+    return 1;
+  });
+  t.mock.method(globalThis, "clearInterval", () => {});
+  const Context = window.AudioContext;
+  window.AudioContext = class extends Context {
+    createAnalyser() {
+      return {
+        fftSize: 1024,
+        getFloatTimeDomainData(array) {
+          array.fill(volume);
+        },
+      };
+    }
+  };
+  const Recorder = globalThis.MediaRecorder;
+  globalThis.MediaRecorder = class extends Recorder {
+    stop() {
+      stopped++;
+      super.stop();
+    }
+  };
+  const voice = createVoiceController();
+  t.after(() => voice.stop());
+  assert.equal(await voice.start(), true);
+  now = 5100;
+  tick();
+  assert.equal(stopped, 1);
+  now = 10000;
+  volume = 0.1;
+  tick();
+  now = 15000;
+  tick();
+  assert.equal(stopped, 1);
+  now = 20100;
+  tick();
+  assert.equal(stopped, 2);
+});

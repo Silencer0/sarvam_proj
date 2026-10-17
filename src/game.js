@@ -1,3 +1,4 @@
+import { getSpellPower } from "./power.js";
 export const SPELLS = {
   fireball: {
     label: "Fireball",
@@ -75,16 +76,22 @@ export function damage(g, amount) {
   g.health = Math.max(0, g.health - amount);
   if (!g.health) g.status = "defeat";
 }
-export function cast(g, command) {
-  if (g.status !== "playing" || !SPELLS[command])
-    return { ok: false, reason: "Arena is resting" };
+export function cast(g, command, score = 50) {
+  const power = getSpellPower(command, score);
+  if (
+    g.status !== "playing" ||
+    typeof command !== "string" ||
+    !Object.hasOwn(SPELLS, command)
+  )
+    return { ok: false, reason: "Arena is resting", power };
   if (g.cooldowns[command] > g.time)
     return {
       ok: false,
+      power,
       reason: `${SPELLS[command].label} ready in ${Math.ceil(g.cooldowns[command] - g.time)}s`,
     };
   g.cooldowns[command] = g.time + SPELLS[command].cooldown;
-  if (command === "shield") g.shieldUntil = g.time + 2.5;
-  if (command === "heal") g.health = Math.min(100, g.health + 30);
-  return { ok: true };
+  if (command === "shield") g.shieldUntil = g.time + power.shieldDuration;
+  if (command === "heal") g.health = Math.min(100, g.health + power.heal);
+  return { ok: true, power };
 }

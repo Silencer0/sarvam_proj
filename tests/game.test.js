@@ -37,3 +37,19 @@ test("normalizes speech whitespace and punctuation", () => {
   assert.equal(commandFromTranscript("fire   ball"), "fireball");
   assert.equal(commandFromTranscript("shield: please"), "shield");
 });
+test("Sarvam score scales heal and shield without bypassing cooldown or caps", () => {
+  const low = createGame(),
+    high = createGame();
+  low.health = high.health = 20;
+  const a = cast(low, "heal", 20),
+    b = cast(high, "heal", 90);
+  assert.ok(b.power.heal > a.power.heal);
+  assert.ok(high.health > low.health);
+  const c = createGame(),
+    d = createGame();
+  cast(c, "shield", 20);
+  cast(d, "shield", 90);
+  assert.ok(d.shieldUntil > c.shieldUntil);
+  assert.equal(cast(d, "shield", 100).ok, false);
+  assert.equal(cast(d, "constructor").ok, false);
+});

@@ -556,3 +556,216 @@ kbd {
     padding-left: 3px;
   }
 }
+.rap-readout {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: #e2e7d7;
+  border: 1px solid #ccd6bf;
+  border-radius: 12px;
+  padding: 10px 14px;
+  min-height: 44px;
+  flex-shrink: 0;
+}
+.rap-readout > div:first-child {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+.rap-readout b {
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  white-space: nowrap;
+}
+.rap-readout span {
+  font-size: 11px;
+  color: #5d7466;
+}
+.rap-readout.accepted {
+  background: #dce9c8;
+}
+.flow-meter {
+  width: 72px;
+  height: 5px;
+  border-radius: 4px;
+  background: #c4cebb;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.flow-meter i {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: #548365;
+  transition: width 0.3s;
+}
+.rap-readout button {
+  font:
+    700 10px "DM Sans",
+    sans-serif;
+  color: #254e43;
+  border: 0;
+  background: transparent;
+  white-space: nowrap;
+  padding: 4px;
+}
+.language-badge {
+  font-size: 10px;
+  color: #506e5e;
+}
+.lyric-dialog {
+  max-width: 600px;
+  width: calc(100% - 32px);
+  max-height: 85dvh;
+  overflow: auto;
+  border: 1px solid #d0d8c6;
+  border-radius: 20px;
+  padding: 28px;
+  background: #f5f4e9;
+  color: #173f3b;
+  box-shadow: 0 24px 100px #173f3b50;
+}
+.lyric-dialog::backdrop {
+  background: #153e3d70;
+  backdrop-filter: blur(5px);
+}
+.lyric-dialog h2 {
+  font:
+    700 30px "Space Grotesk",
+    sans-serif;
+  margin: 8px 0;
+}
+.lyric-dialog p {
+  font-size: 12px;
+  line-height: 1.7;
+  color: #587060;
+}
+.lyric-dialog small {
+  font-size: 11px;
+  line-height: 1.6;
+  display: block;
+  color: #637866;
+}
+.lyric-dialog .eyebrow {
+  font-size: 10px;
+  letter-spacing: 2px;
+}
+.close-guide {
+  float: right;
+  border: 0;
+  background: #e1e7d5;
+  color: #254e43;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  font-size: 20px;
+}
+.lyric-examples {
+  display: grid;
+  gap: 6px;
+  margin: 16px 0;
+}
+.lyric-examples > div {
+  padding: 10px 12px;
+  background: #e7ebdd;
+  border-radius: 9px;
+}
+.lyric-examples strong {
+  font-size: 11px;
+}
+.lyric-examples p {
+  margin: 4px 0 0;
+}
+.transcript {
+  white-space: normal;
+  max-height: 80px;
+  overflow: auto;
+  line-height: 1.5;
+}
+button:focus-visible,
+input:focus-visible {
+  outline: 3px solid #799d60;
+  outline-offset: 3px;
+}
+@media (max-width: 700px) {
+  .rap-readout {
+    gap: 7px;
+    padding: 8px 10px;
+  }
+  .rap-readout > div:first-child {
+    display: block;
+  }
+  .rap-readout b {
+    display: block;
+    margin-bottom: 3px;
+  }
+  .rap-readout span {
+    font-size: 9px;
+  }
+  .flow-meter {
+    width: 35px;
+  }
+  .language-badge {
+    font-size: 8px;
+  }
+  .top-right {
+    gap: 8px;
+  }
+  .lyric-dialog {
+    padding: 20px;
+  }
+  .start-card {
+    max-height: calc(100% - 20px);
+    overflow: auto;
+  }
+}
+.spell {
+  flex-wrap: wrap;
+  column-gap: 8px;
+  row-gap: 5px;
+}
+.spell > div {
+  flex: 1;
+  min-width: 0;
+}
+.spell small {
+  display: block;
+  line-height: 1.4;
+}
+.spell-score {
+  font-size: 9px;
+  font-weight: 700;
+  color: #527a52;
+  width: 100%;
+  padding-left: 46px;
+}
+.spell .timer {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+}
+.rap-readout b {
+  font-size: 10px;
+}
+.rap-readout .flow-meter {
+  width: 90px;
+}
+@media (max-width: 700px) {
+  .spell-score {
+    display: block;
+    font-size: 8px;
+    padding: 0;
+    margin-top: 4px;
+  }
+  .spell .timer {
+    position: static;
+  }
+  .spell small {
+    font-size: 8px;
+  }
+  .rap-readout .flow-meter {
+    width: 30px;
+  }
+}

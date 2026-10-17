@@ -63,3 +63,18 @@ Files: public/assets/\*\*, README.md.
 - [x] Preserve the server-only root `.env` boundary and scan output for secrets before pushing.
 
 Baseline and outstanding verification are recorded in `docs/verification.md`. The integrated 18-test suite includes actual WebSocket peers and the client transport; the production build passes. A real Sarvam request also returned HTTP 200. Automated visual browser checks remain unavailable after an approval-policy rejection.
+
+### Latest scope: Sarvam AI rap judging and score-scaled combat
+
+This scope supersedes cosmetic score handling and bare-command casting.
+
+- [x] Validate 4–80 words and local diversity; translate supported spoken languages with Sarvam.
+- [x] Ask Sarvam's real LLM to choose the spell and judge translated lyric text using relevance 40, creativity 30, wordplay/rhyme 20, coherence 10.
+- [x] Fail closed on rejected bars, invalid judge responses, or unavailable upstream; do not fabricate lexical quality scores.
+- [x] Show topic cues by each spell card, judged score, and visible size scaling `0.5 + 1.5 × score / 100`.
+- [x] Scale real damage/healing, shield duration, and dash distance by `0.25 + 1.75 × score / 100`; round damage/healing, preserve cooldowns/ranges, cap health.
+- [x] Issue and validate short-lived, single-use signed PvP cast proofs bound to player, command, and score; reject client score manipulation and proof replay.
+- [x] Test judging validation, failures, scaled solo/PvP rules, proof expiry/tamper/replay/wrong-player cases, and full integration.
+- [x] Document translation limitations, translated-text scoring, speech plus chat access, additional latency, and token charges.
+
+Do not claim live judge verification or updated test totals until the corresponding checks run.

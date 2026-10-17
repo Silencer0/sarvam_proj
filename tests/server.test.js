@@ -68,9 +68,22 @@ test("forwards fixed upstream request and returns only transcript fields", async
   assert.equal(captured.url, "https://api.sarvam.ai/speech-to-text");
   assert.equal(captured.init.headers["api-subscription-key"], "dummy");
   assert.equal(captured.init.body.get("model"), "saaras:v4");
+  assert.equal(captured.init.body.get("mode"), "translate");
+  assert.equal(captured.init.body.get("language_code"), "unknown");
+  assert.equal(captured.init.body.has("keyterms"), false);
   assert.deepEqual(await response.json(), {
     transcript: "fireball",
     language_code: "en-IN",
+    assessment: {
+      accepted: false,
+      command: null,
+      score: 0,
+      feedback:
+        "Rap 4–80 words with original imagery; bare spells and repeated words do not count.",
+      grade: "Keep writing",
+      words: 1,
+    },
+    castToken: null,
   });
 });
 test("upstream errors never expose response details or credentials", async () => {
@@ -85,4 +98,55 @@ test("upstream errors never expose response details or credentials", async () =>
   );
   assert.equal(response.status, 502);
   assert.doesNotMatch(await response.text(), /sensitive|dummy/);
+});
+test("AI accepted bars issue a player-bound score proof; judge failures fail closed", async () => {
+  const { createCastProofs } = await import("../server/cast-proofs.js");
+  const proofs = createCastProofs();
+  const playerId = "00000000-0000-0000-0000-000000000001";
+  const init = upload();
+  init.body.append("playerId", playerId);
+  const base = {
+    apiKey: "dummy",
+    proofs,
+    fetchImpl: async () =>
+      new Response(
+        JSON.stringify({
+          transcript: "My molten crown consumes the frozen sky",
+          language_code: "en-IN",
+        }),
+      ),
+  };
+  const assessment = {
+    accepted: true,
+    command: "fireball",
+    score: 88,
+    feedback: "Creative heat imagery",
+    grade: "Legendary lyric",
+    words: 8,
+  };
+  const response = await request(
+    { ...base, judgeImpl: async () => assessment },
+    "/api/transcribe",
+    init,
+  );
+  const data = await response.json();
+  assert.equal(response.status, 200);
+  assert.deepEqual(data.assessment, assessment);
+  assert.equal(proofs.consume(data.castToken, "fireball"), null);
+  assert.deepEqual(proofs.consume(data.castToken, "fireball", playerId), {
+    command: "fireball",
+    score: 88,
+  });
+  const failed = await request(
+    {
+      ...base,
+      judgeImpl: async () => {
+        throw new Error("sensitive judge detail");
+      },
+    },
+    "/api/transcribe",
+    upload(),
+  );
+  assert.equal(failed.status, 502);
+  assert.doesNotMatch(await failed.text(), /sensitive|castToken/);
 });

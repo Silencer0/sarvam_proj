@@ -71,7 +71,7 @@ export function createMultiplayerClient({
     create: () => send({ type: "create" }),
     join: (code) => send({ type: "join", code }),
     move: (x, z) => send({ type: "move", x, z }),
-    cast: (command) => send({ type: "cast", command }),
+    cast: (command, castToken) => send({ type: "cast", command, castToken }),
     leave,
     close: leave,
     get id() {

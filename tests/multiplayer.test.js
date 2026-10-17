@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import http from "node:http";
 import { WebSocket } from "ws";
+import { castProofs } from "../server/cast-proofs.js";
 import { attachMultiplayer } from "../server/multiplayer.js";
 function client(url) {
   const ws = new WebSocket(url);
@@ -45,13 +46,21 @@ test("two real websocket players join, move, cast and forfeit", async (t) => {
   a.send({ type: "move", x: 100, z: 0 });
   const moved = await a.wait((m) => m.type === "state" && m.players[0].x > -4);
   assert.ok(moved.players[0].x < -3);
-  a.send({ type: "cast", command: "fireball" });
+  a.send({
+    type: "cast",
+    command: "fireball",
+    castToken: castProofs.issue({ command: "fireball", score: 50 }, aid),
+  });
   await a.wait((m) => m.type === "cast");
   const hit = await b.wait(
-    (m) => m.type === "state" && m.players[1].health === 60,
+    (m) => m.type === "state" && m.players[1].health === 55,
   );
   assert.equal(hit.players[0].health, 100);
-  a.send({ type: "cast", command: "fireball" });
+  a.send({
+    type: "cast",
+    command: "fireball",
+    castToken: castProofs.issue({ command: "fireball", score: 50 }, aid),
+  });
   await a.wait((m) => m.type === "error");
   b.ws.close();
   const finished = await a.wait(

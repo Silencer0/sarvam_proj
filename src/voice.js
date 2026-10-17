@@ -1,6 +1,7 @@
 /** Complete, independently decodable utterances; no browser credentials. */
 export function createVoiceController({
   onTranscript = () => {},
+  getPlayerId = () => "",
   onStatus = () => {},
   onError = () => {},
 } = {}) {
@@ -84,6 +85,7 @@ export function createVoiceController({
         "audio/mp4",
       ].find((type) => MediaRecorder.isTypeSupported(type));
       let lastSpeech = 0,
+        firstSpeech = 0,
         started = 0,
         heard = false;
       function record() {
@@ -91,6 +93,7 @@ export function createVoiceController({
         try {
           heard = false;
           lastSpeech = 0;
+          firstSpeech = 0;
           started = performance.now();
           const chunks = [];
           const currentRecorder = new MediaRecorder(
@@ -131,6 +134,8 @@ export function createVoiceController({
                   ? "voice.ogg"
                   : "voice.webm",
             );
+            const playerId = getPlayerId();
+            if (playerId) form.append("playerId", playerId);
             try {
               const response = await fetch("/api/transcribe", {
                 method: "POST",
@@ -143,7 +148,7 @@ export function createVoiceController({
                   data.error || "Speech request failed. Try again.",
                 );
               if (active && session === generation && data.transcript.trim())
-                onTranscript(data.transcript);
+                onTranscript(data.transcript, data);
             } catch (error) {
               if (
                 active &&
@@ -183,11 +188,15 @@ export function createVoiceController({
         );
         const now = performance.now();
         if (rms > 0.018) {
+          if (!heard) firstSpeech = now;
           heard = true;
           lastSpeech = now;
           onStatus("hearing");
         }
-        if ((heard && now - lastSpeech > 650) || now - started > 5000)
+        if (
+          (heard && (now - lastSpeech > 900 || now - firstSpeech >= 10000)) ||
+          (!heard && now - started >= 5000)
+        )
           recorder.stop();
       }, 60);
       return true;

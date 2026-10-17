@@ -9,7 +9,8 @@ import {
   forfeit,
   snapshot,
 } from "./duel.js";
-export function attachMultiplayer(server) {
+import { castProofs } from "./cast-proofs.js";
+export function attachMultiplayer(server, { proofs = castProofs } = {}) {
   const wss = new WebSocketServer({ server, path: "/ws", maxPayload: 1024 });
   const rooms = new Map();
   const send = (ws, data) => {
@@ -139,7 +140,12 @@ export function attachMultiplayer(server) {
         return;
       }
       if (data.type === "cast") {
-        const event = castSpell(room.duel, ws.id, data.command);
+        const proof = proofs.consume(data.castToken, data.command, ws.id);
+        if (!proof) {
+          error("Rap approval expired or invalid. Record another bar.");
+          return;
+        }
+        const event = castSpell(room.duel, ws.id, data.command, proof.score);
         if (!event) {
           error("Spell unavailable or cooling down.");
           return;

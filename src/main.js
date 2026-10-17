@@ -2,37 +2,61 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { clone as cloneSkeleton } from "three/addons/utils/SkeletonUtils.js";
 import { createVoiceController } from "./voice.js";
-import {
-  SPELLS,
-  commandFromTranscript,
-  createGame,
-  cast,
-  tick,
-  damage,
-} from "./game.js";
+import { SPELLS, createGame, cast, tick, damage } from "./game.js";
 import "./style.css";
+import { getSpellPower } from "./power.js";
 import { createMultiplayerClient } from "./multiplayer-client.js";
 
 const $ = (s) => document.querySelector(s);
 $("#app").innerHTML =
-  `<header class="topbar"><div class="brand"><span class="brand-symbol">◈</span><div><strong>echo arena</strong><small>Speak. Cast. Conquer.</small></div></div><div class="top-right"><span class="pill">✦ &nbsp; Powered by Sarvam AI</span><button class="sound" aria-label="Unmute sound" title="Toggle sound">♪</button></div></header><section class="intro-line"><div><div class="eyebrow">A VOICE-POWERED ADVENTURE</div><h1>Your voice is the weapon.</h1></div><p>One arena. Three waves. A little magic.</p></section><section class="arena"><div class="hud"><div class="health-panel"><div class="health-label"><span>YOUR VITALITY</span><span id="health">100 / 100</span></div><div class="health-track"><i id="health-bar" style="width:100%"></i></div></div><div class="wave-panel"><div><small>WAVE</small><strong id="wave">01 / 03</strong></div><div><small>SCORE</small><strong id="score">0000</strong></div></div></div><span class="scene-label">THE WHISPERING GARDEN &nbsp; / &nbsp; ARENA 01</span><button id="reconnect" class="reconnect" hidden>Reconnect microphone ↗</button><div class="transcript"><i class="voice-dot"></i><span id="transcript">Your adventure is waiting</span></div><div class="toast"></div><div class="overlay"><div class="start-card"><div class="rune">✦</div><h2>A word.<br>A world of magic.</h2><p>Hold your ground in a living 3D arena.<br>Move with <b>W A S D</b>. Speak to cast your spells.<br>Survive three waves to become the echo champion.</p><button class="primary" id="start">Enter the arena &nbsp; ↗</button><div class="error" id="start-error"></div><small>Microphone access required · English & Hindi<br>Say “fireball”, “lightning”, “shield”, “dash” or “heal”.</small></div></div></section><section class="command-row">${Object.entries(
+  `<header class="topbar"><div class="brand"><span class="brand-symbol">◈</span><div><strong>echo arena</strong><small>Rap. Cast. Conquer.</small></div></div><div class="top-right"><span class="pill">✦ &nbsp; Powered by Sarvam AI</span><button class="sound" aria-label="Unmute sound" title="Toggle sound">♪</button></div></header><section class="intro-line"><div><div class="eyebrow">A MULTILINGUAL RAP BATTLE</div><h1>Drop bars. Cast magic.</h1></div><p>Your words bring the heat.</p></section><section class="arena"><div class="hud"><div class="health-panel"><div class="health-label"><span>YOUR VITALITY</span><span id="health">100 / 100</span></div><div class="health-track"><i id="health-bar" style="width:100%"></i></div></div><div class="wave-panel"><div><small>WAVE</small><strong id="wave">01 / 03</strong></div><div><small>SCORE</small><strong id="score">0000</strong></div></div></div><span class="scene-label">THE WHISPERING GARDEN &nbsp; / &nbsp; ARENA 01</span><button id="reconnect" class="reconnect" hidden>Reconnect microphone ↗</button><div class="transcript"><i class="voice-dot"></i><span id="transcript">Your adventure is waiting</span></div><div class="toast"></div><div class="overlay"><div class="start-card"><div class="rune">✦</div><h2>A verse.<br>A world of magic.</h2><p>Hold your ground in a living 3D arena.<br>Move with <b>W A S D</b>. Rap a short line to cast your spells.<br>Survive three waves to become the echo champion.</p><button class="primary" id="start">Enter the arena &nbsp; ↗</button><div class="error" id="start-error"></div><small>Auto-detects English + 22 Indian languages.<br>Rap 4+ words about an element. Pause to cast.</small></div></div></section><section class="command-row">${Object.entries(
     SPELLS,
   )
     .map(
       ([key, s]) =>
-        `<div class="spell" data-spell="${key}"><span class="spell-icon" style="--spell:${s.color}">${s.icon}</span><div><strong>${s.label}</strong><small>Say ${s.hint}</small></div><span class="timer">Ready</span></div>`,
+        `<div class="spell" data-spell="${key}"><span class="spell-icon" style="--spell:${s.color}">${s.icon}</span><div><strong>${s.label}</strong><small>${{ fireball: "Topic: fire & heat", lightning: "Topic: storm & voltage", shield: "Topic: armor & protection", dash: "Topic: speed & escape", heal: "Topic: life & recovery" }[key]}</small></div><span class="spell-score">AI —/100</span><span class="timer">Ready</span></div>`,
     )
     .join(
       "",
-    )}</section><footer class="footer"><span><span class="keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move</span> &nbsp; · &nbsp; YOUR VOICE casts the magic</span><span>OPEN ASSETS. LIMITLESS IMAGINATION. &nbsp; ✦</span></footer>`;
+    )}</section><footer class="footer"><span><span class="keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move</span> &nbsp; · &nbsp; YOUR BARS cast the magic</span><span>OPEN ASSETS. LIMITLESS IMAGINATION. &nbsp; ✦</span></footer>`;
 $("#start").insertAdjacentHTML(
   "beforebegin",
-  `<div class="mode-tabs" role="tablist" aria-label="Game mode"><button id="solo-tab" class="selected" role="tab" aria-selected="true">Solo adventure</button><button id="pvp-tab" role="tab" aria-selected="false">Online duel</button></div><div id="pvp-lobby" hidden><p class="duel-description">A real opponent. The same voice magic.<br>Create a private room or enter a friend's code.</p><button class="primary" id="create-room">Create a duel room ↗</button><div class="join-row"><input id="room-input" aria-label="Room code" placeholder="ROOM CODE" maxlength="8" autocomplete="off"><button id="join-room">Join room</button></div></div>`,
+  `<div class="mode-tabs" role="tablist" aria-label="Game mode"><button id="solo-tab" class="selected" role="tab" aria-selected="true">Solo adventure</button><button id="pvp-tab" role="tab" aria-selected="false">Online duel</button></div><div id="pvp-lobby" hidden><p class="duel-description">A real opponent. Your own lyrical magic.<br>Create a private room or enter a friend's code.</p><button class="primary" id="create-room">Create a duel room ↗</button><div class="join-row"><input id="room-input" aria-label="Room code" placeholder="ROOM CODE" maxlength="8" autocomplete="off"><button id="join-room">Join room</button></div></div>`,
 );
 $(".arena").insertAdjacentHTML(
   "beforeend",
   `<div class="duel-bar" hidden><span>PRIVATE DUEL <b id="room-code"></b></span><span id="rival-health">Waiting for opponent</span><button id="leave-room">Leave ↗</button></div>`,
 );
+const rapExamples = {
+  fireball: "I bring the heat, feel flames at your feet",
+  lightning: "Thunder in my veins, lightning breaks your chains",
+  shield: "Your attacks fall flat, my armor sends them back",
+  dash: "I race through the night, gone before your sight",
+  heal: "From pain I rise, new life lights my eyes",
+};
+$(".command-row").insertAdjacentHTML(
+  "beforebegin",
+  `<section class="rap-readout" aria-live="polite"><div><b id="rap-grade">MIC CHECK</b><span id="rap-feedback">Rap about a spell’s topic. Sarvam scores your bars; better bars hit harder.</span></div><div class="flow-meter" aria-label="Sarvam rap score"><i id="rap-flow"></i></div><button id="lyric-help">Lyric book ↗</button></section>`,
+);
+$(".top-right").insertAdjacentHTML(
+  "afterbegin",
+  '<span class="language-badge" title="Automatic language detection and English translation">23 languages · Auto</span>',
+);
+$("#app").insertAdjacentHTML(
+  "beforeend",
+  `<dialog class="lyric-dialog"><form method="dialog"><button class="close-guide" aria-label="Close lyric book">×</button></form><div class="eyebrow">THE SPELL CYPHER</div><h2>Find your flow.</h2><p>Rap a short line with at least four words. Its imagery chooses your spell. Try these bars, or make up your own in a supported language.</p><div class="lyric-examples">${Object.entries(
+    rapExamples,
+  )
+    .map(
+      ([key, line]) =>
+        `<div><strong>${SPELLS[key].label}</strong><p>“${line}”</p></div>`,
+    )
+    .join(
+      "",
+    )}</div><p><b>Automatic language detection:</b> English, Hindi, Bengali, Tamil, Telugu, Kannada, Malayalam, Marathi, Gujarati, Punjabi, Odia, Assamese, Urdu, Nepali, Konkani, Kashmiri, Sindhi, Sanskrit, Santali, Manipuri, Bodo, Maithili and Dogri.</p><small>Sarvam translates your bar to English for spell matching. Other world languages are outside this speech engine’s supported coverage. Sarvam AI scores topic relevance, creativity, wordplay and coherence from translated lyrics. Better bars produce bigger, stronger spells; weak bars cast smaller, weaker magic. Translation can change wordplay. Audio rhythm and accent are not scored. Cooldowns stay fixed.</small></dialog>`,
+);
+$("#lyric-help").onclick = () => $(".lyric-dialog").showModal();
+let lyricVisibleUntil = 0;
 const arena = $(".arena");
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
@@ -311,10 +335,10 @@ function playSound(name) {
   a.volume = 0.3;
   a.play().catch(() => {});
 }
-function burst(position, color, count = 16) {
+function burst(position, color, count = 16, powerScale = 1) {
   for (let i = 0; i < count; i++) {
     const p = mesh(
-      new THREE.IcosahedronGeometry(0.07 + Math.random() * 0.08),
+      new THREE.IcosahedronGeometry((0.07 + Math.random() * 0.08) * powerScale),
       color,
       position.x,
       position.y + 0.6,
@@ -415,13 +439,16 @@ function wave() {
   }
   toast(`Wave ${game.wave} · ${count} garden gremlins incoming`);
 }
-function perform(command) {
-  const result = cast(game, command);
+function perform(command, score) {
+  const result = cast(game, command, score);
   if (!result.ok) {
     toast(result.reason);
     return;
   }
-  toast(`${SPELLS[command].label} cast!`);
+  const power = result.power;
+  toast(
+    `${SPELLS[command].label} · ${score}/100 · ${power.multiplier.toFixed(2)}× power`,
+  );
   playSound(command === "shield" ? "shield" : "cast");
   tone(command === "lightning" ? 750 : command === "heal" ? 420 : 230);
   const target = enemies.reduce(
@@ -435,7 +462,7 @@ function perform(command) {
   );
   if (command === "fireball" && target) {
     const p = mesh(
-      new THREE.IcosahedronGeometry(0.24),
+      new THREE.IcosahedronGeometry(0.24 * power.scale),
       "#ff9b3d",
       player.position.x,
       1,
@@ -448,22 +475,27 @@ function perform(command) {
       target: target.body.position.clone().add(new THREE.Vector3(0, 0.6, 0)),
       start: p.position.clone(),
     });
-    target.hp -= 40;
-    burst(target.body.position, "#ffb85b", 8);
+    target.hp -= power.damage;
+    burst(target.body.position, "#ffb85b", 8, power.scale);
   }
   if (command === "lightning") {
     for (const enemy of enemies) {
       if (enemy.body.position.distanceTo(player.position) < 7) {
-        enemy.hp -= 75;
+        enemy.hp -= power.damage;
         const bolt = mesh(
-          new THREE.CylinderGeometry(0.09, 0.16, 5, 5),
+          new THREE.CylinderGeometry(
+            0.09 * power.scale,
+            0.16 * power.scale,
+            5 * power.scale,
+            5,
+          ),
           "#f7e897",
           enemy.body.position.x,
           3,
           enemy.body.position.z,
         );
         effects.push({ mesh: bolt, life: 0.24, max: 0.24 });
-        burst(enemy.body.position, "#fff6ad", 12);
+        burst(enemy.body.position, "#fff6ad", 12, power.scale);
       }
     }
   }
@@ -473,33 +505,56 @@ function perform(command) {
       0,
       Math.cos(player.rotation.y),
     );
-    player.position.addScaledVector(direction, 3);
+    player.position.addScaledVector(direction, power.dashDistance);
     player.position.clampLength(0, 8.7);
-    burst(player.position, "#f4edb0", 20);
+    burst(player.position, "#f4edb0", 20, power.scale);
   }
-  if (command === "heal") burst(player.position, "#a7ef9b", 22);
-  if (command === "shield") burst(player.position, "#b8fff0", 15);
+  if (command === "heal") burst(player.position, "#a7ef9b", 22, power.scale);
+  if (command === "shield") {
+    shield.scale.setScalar(power.scale);
+    burst(player.position, "#b8fff0", 15, power.scale);
+  }
 }
 const voice = createVoiceController({
-  onTranscript: (text) => {
+  getPlayerId: () => (mode === "pvp" ? duelId : ""),
+  onTranscript: (text, data) => {
     $("#transcript").textContent = `“${text}”`;
-    const command = commandFromTranscript(text);
-    if (command && started) {
-      if (mode === "pvp") multiplayer.cast(command);
-      else perform(command);
-    } else if (started) toast("Try saying “fireball”, “shield” or “lightning”");
+    const result = data?.assessment;
+    if (!result) {
+      toast("Sarvam scoring unavailable. Try your bar again.");
+      return;
+    }
+    lyricVisibleUntil = performance.now() + 7000;
+    $("#rap-grade").textContent = `SARVAM ${result.score}/100`;
+    $("#rap-feedback").textContent = result.feedback;
+    $("#rap-flow").style.width = `${result.score}%`;
+    $(".rap-readout").classList.toggle("accepted", result.accepted);
+    if (!started) return;
+    if (result.accepted) {
+      const power = getSpellPower(result.command, result.score);
+      const card = $(`[data-spell="${result.command}"]`);
+      if (card)
+        card.querySelector(".spell-score").textContent =
+          `${result.score}/100 · ${power.multiplier.toFixed(2)}×`;
+      if (mode === "pvp") multiplayer.cast(result.command, data.castToken);
+      else perform(result.command, result.score);
+    } else toast(result.feedback);
   },
   onStatus: (status) => {
     const active = ["listening", "hearing"].includes(status);
     $(".voice-dot").classList.toggle("active", active);
-    if (!started || ["listening", "hearing", "transcribing"].includes(status))
+    if (
+      performance.now() > lyricVisibleUntil ||
+      status === "hearing" ||
+      status === "transcribing"
+    )
       $("#transcript").textContent =
         status === "listening"
-          ? "Listening · speak a spell"
+          ? "Listening · drop your next bar"
           : status === "hearing"
-            ? "Hearing your spell…"
+            ? "Recording your verse…"
             : status === "transcribing"
-              ? "Hearing your magic…"
+              ? "Sarvam is translating & judging your bar…"
               : String(status);
   },
   onError: (error) => {
@@ -547,7 +602,7 @@ $("#start").onclick = async () => {
     $(".overlay").classList.add("hidden");
     wave();
     music?.play().catch(() => {});
-    $("#transcript").textContent = "Listening · speak a spell";
+    $("#transcript").textContent = "Listening · drop your next bar";
     $(".voice-dot").classList.add("active");
   } catch (error) {
     $("#start-error").textContent =
@@ -605,12 +660,12 @@ function setMode(next) {
   $("#start").hidden = next === "pvp";
   $(".start-card h2").innerHTML =
     next === "pvp"
-      ? "Two voices.<br>One champion."
-      : "A word.<br>A world of magic.";
+      ? "Two MCs.<br>One champion."
+      : "A verse.<br>A world of magic.";
   $(".start-card p").hidden = next === "pvp";
   if (next === "solo") {
     $(".start-card p").innerHTML =
-      "Hold your ground in a living 3D arena.<br>Move with <b>W A S D</b>. Speak to cast your spells.<br>Survive three waves to become the echo champion.";
+      "Hold your ground in a living 3D arena.<br>Move with <b>W A S D</b>. Rap a short line to cast your spells.<br>Survive three waves to become the echo champion.";
     $("#start").textContent = "Enter the arena ↗";
   }
   $("#start-error").textContent = "";
@@ -691,7 +746,7 @@ function leaveDuel(message = "") {
   $("#pvp-lobby").hidden = false;
   $("#start").hidden = true;
   $("#start-error").textContent = message;
-  $(".start-card h2").innerHTML = "Two voices.<br>One champion.";
+  $(".start-card h2").innerHTML = "Two MCs.<br>One champion.";
   $(".start-card p").hidden = true;
   $("#transcript").textContent = "Create a room or join your friend";
   setMode("pvp");
@@ -740,7 +795,7 @@ const multiplayer = createMultiplayerClient({
       started = true;
       $(".overlay").classList.add("hidden");
       if (previousPhase !== "playing")
-        toast("Duel started · speak your spells!");
+        toast("Cypher started · drop your bars!");
     }
     if (state.phase === "finished" && previousPhase !== "finished") {
       started = false;
@@ -768,10 +823,11 @@ const multiplayer = createMultiplayerClient({
         0,
         event.targetZ ?? event.z,
       );
+    const power = getSpellPower(event.command, event.score);
     playSound(event.command === "shield" ? "shield" : "cast");
     if (event.command === "fireball") {
       const p = mesh(
-        new THREE.IcosahedronGeometry(0.24),
+        new THREE.IcosahedronGeometry(0.24 * power.scale),
         "#ff9b3d",
         point.x,
         1,
@@ -784,20 +840,30 @@ const multiplayer = createMultiplayerClient({
         start: p.position.clone(),
         target: target.clone().setY(0.8),
       });
-      burst(target, "#ffb85b", 8);
+      burst(target, "#ffb85b", 8, power.scale);
     } else if (event.command === "lightning") {
       const bolt = mesh(
-        new THREE.CylinderGeometry(0.09, 0.16, 5, 5),
+        new THREE.CylinderGeometry(
+          0.09 * power.scale,
+          0.16 * power.scale,
+          5 * power.scale,
+          5,
+        ),
         "#f7e897",
         target.x,
         3,
         target.z,
       );
       effects.push({ mesh: bolt, life: 0.24, max: 0.24 });
-      burst(target, "#fff6ad", 12);
-    } else burst(point, SPELLS[event.command]?.color || "#ffffff", 20);
+      burst(target, "#fff6ad", 12, power.scale);
+    } else
+      burst(point, SPELLS[event.command]?.color || "#ffffff", 20, power.scale);
+    if (event.command === "shield") {
+      if (event.playerId === duelId) shield.scale.setScalar(power.scale);
+      else remote?.bubble.scale.setScalar(power.scale);
+    }
     toast(
-      `${event.playerId === duelId ? "You" : "Opponent"} cast ${SPELLS[event.command]?.label || "magic"}`,
+      `${event.playerId === duelId ? "You" : "Opponent"} cast ${SPELLS[event.command]?.label || "magic"} · ${event.score}/100 · ${power.multiplier.toFixed(2)}×`,
     );
   },
   onError: (message) => {

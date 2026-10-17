@@ -1,3 +1,4 @@
+import { getSpellPower } from "../src/power.js";
 import { SPELLS } from "../src/game.js";
 const radius = 8.7;
 const clampPosition = (p) => {
@@ -56,7 +57,7 @@ export function tickDuel(d, dt) {
     }
   }
 }
-export function castSpell(d, id, command) {
+export function castSpell(d, id, command, score = 50) {
   if (
     d.phase !== "playing" ||
     typeof command !== "string" ||
@@ -66,12 +67,13 @@ export function castSpell(d, id, command) {
   const p = d.players.find((p) => p.id === id),
     target = d.players.find((p) => p.id !== id);
   if (!p || !target || d.time < p.cooldowns[command]) return null;
+  const power = getSpellPower(command, score);
   p.cooldowns[command] = d.time + SPELLS[command].cooldown;
-  if (command === "shield") p.shieldUntil = d.time + 2.5;
-  if (command === "heal") p.health = Math.min(100, p.health + 30);
+  if (command === "shield") p.shieldUntil = d.time + power.shieldDuration;
+  if (command === "heal") p.health = Math.min(100, p.health + power.heal);
   if (command === "dash") {
-    p.x += p.direction.x * 3;
-    p.z += p.direction.z * 3;
+    p.x += p.direction.x * power.dashDistance;
+    p.z += p.direction.z * power.dashDistance;
     clampPosition(p);
   }
   if (
@@ -80,7 +82,7 @@ export function castSpell(d, id, command) {
       (command === "fireball" ? 12 : 7) &&
     target.shieldUntil <= d.time
   ) {
-    target.health = Math.max(0, target.health - SPELLS[command].damage);
+    target.health = Math.max(0, target.health - power.damage);
     if (target.health === 0) {
       d.phase = "finished";
       d.winnerId = p.id;
@@ -88,6 +90,8 @@ export function castSpell(d, id, command) {
   }
   return {
     type: "cast",
+    ...power,
+    power,
     playerId: id,
     command,
     x: p.x,
